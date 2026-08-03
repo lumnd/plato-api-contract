@@ -1,0 +1,25 @@
+{
+    "manifest_version": 1,
+    "adapter": "plato",
+    "fingerprint": {
+        "adapter": "8bdef1b3b201c8d0cda73bd5c1d90a628e3a200437e2c321adfff3e94f309840",
+        "config": "2b1f5e066c47c84c364de39dce0c6b6ccdcdea6046ec80ff6cf357f615b85e5e",
+        "contracts": "64bdcfb83a490d712c798b8436dab56135acb4cc3db9fe49aedbacdbe3de37a7",
+        "templates": "cc2f4b15d9032819f9c93aa4f4aaf78d438ef209020c4b17edb997a08d38e3eb",
+        "value": "5e9af27a4a22842597f4c25d3dce6a13070160ef96b24c32b094ff1d4fce8ea6"
+    },
+    "artifacts": {
+        "app/control/ctl_ping.php": {
+            "ownership": "generated",
+            "sha256": "601c86c20af049405a599c4c91956f618fe243ad23d93c29c0f0e41cbb870ab1"
+        },
+        "app/logic/ping_index.php": {
+            "ownership": "user",
+            "sha256": null
+        },
+        "docs/api/openapi.json": {
+            "ownership": "generated",
+            "sha256": "388acb42a366ed72f5530e10f2bc99118a2d1c0b88719a2bd5ed26e7a3d1504c"
+        }
+    }
+}

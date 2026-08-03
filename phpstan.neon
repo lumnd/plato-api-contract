@@ -1,0 +1,11 @@
+parameters:
+    level: 8
+    paths:
+        - src
+        - templates
+        - tests
+    excludePaths:
+        # Frozen generator output, not project source. Golden PHP is syntax checked by the golden
+        # test suite (php -l) and by the artifact verifier in the generation pipeline.
+        - tests/Golden/plato
+    tmpDir: .phpstan.cache

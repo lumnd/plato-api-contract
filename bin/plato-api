@@ -1,0 +1,187 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+use Lumnd\PlatoApiContract\Console\CommandFailure;
+use Lumnd\PlatoApiContract\Console\ExitCode;
+use Lumnd\PlatoApiContract\Console\GenerationRunner;
+use Lumnd\PlatoApiContract\Console\ProjectConfig;
+use Lumnd\PlatoApiContract\Contract\ContractLoader;
+use Lumnd\PlatoApiContract\Exception\ContractValidationException;
+use Lumnd\PlatoApiContract\Ir\ApiContract;
+use Lumnd\PlatoApiContract\Platform\Platforms;
+
+if (PHP_SAPI !== 'cli') {
+    fwrite(STDERR, "plato-api can only run from the command line.\n");
+    exit(1);
+}
+
+// Composer's bin proxy names the host project's autoloader before it includes this file, and that
+// is read first because PHP resolves __DIR__ through symlinks: with this package installed as a
+// symlinked path repository, walking up from here finds the package's own vendor/ and would
+// generate against an autoloader that cannot see the project's DTO classes. realpath() because
+// that global carries a '/..' segment
+$autoload = '';
+if (isset($GLOBALS['_composer_autoload_path'])) {
+    $composerAutoload = realpath((string) $GLOBALS['_composer_autoload_path']);
+    if ($composerAutoload !== false && is_file($composerAutoload)) {
+        $autoload = $composerAutoload;
+    }
+}
+
+$directory = __DIR__;
+while ($autoload === '') {
+    if (is_file($directory . '/vendor/autoload.php')) {
+        $autoload = $directory . '/vendor/autoload.php';
+        break;
+    }
+    if (basename($directory) === 'vendor' && is_file($directory . '/autoload.php')) {
+        $autoload = $directory . '/autoload.php';
+        break;
+    }
+    $parent = dirname($directory);
+    if ($parent === $directory) {
+        break;
+    }
+    $directory = $parent;
+}
+
+if ($autoload === '') {
+    fwrite(STDERR, "Cannot find Composer's vendor/autoload.php; run composer install first.\n");
+    exit(1);
+}
+require_once $autoload;
+
+/**
+ * @param list<string> $arguments
+ * @return array{0: list<string>, 1: array<string, string|bool>}
+ */
+$parse = static function (array $arguments): array {
+    $positional = [];
+    $options = [];
+    foreach ($arguments as $argument) {
+        if (!str_starts_with($argument, '--')) {
+            $positional[] = $argument;
+            continue;
+        }
+
+        $body = substr($argument, 2);
+        $separator = strpos($body, '=');
+        if ($separator === false) {
+            $options[$body] = true;
+            continue;
+        }
+        $options[substr($body, 0, $separator)] = substr($body, $separator + 1);
+    }
+
+    return [$positional, $options];
+};
+
+$out = static fn (string $line): int|false => fwrite(STDOUT, $line . PHP_EOL);
+$err = static fn (string $line): int|false => fwrite(STDERR, $line . PHP_EOL);
+
+$command = $argv[1] ?? '';
+[$positional, $options] = $parse(array_slice($argv, 2));
+
+if ($command === 'api:lint') {
+    if (isset($positional[0])) {
+        $options['contracts'] ??= $positional[0];
+    }
+
+    try {
+        $options = ProjectConfig::resolve($options, (string) getcwd());
+        $target = (string) $options['contracts'];
+        $platform = $options['platform'] ?? $options['adapter'] ?? 'plato';
+        $adapter = Platforms::resolver()->resolve($platform, $options);
+        $contracts = ContractLoader::forConvention($adapter->routeConvention())->loadDirectory($target);
+        fwrite(STDOUT, sprintf(
+            "Valid: %d controller(s), %d operation(s).\n",
+            count($contracts->apis),
+            array_sum(array_map(
+                static fn (ApiContract $api): int => count($api->operations),
+                $contracts->apis,
+            )),
+        ));
+        exit(ExitCode::SUCCESS);
+    } catch (ContractValidationException $exception) {
+        foreach ($exception->issues() as $issue) {
+            fwrite(STDERR, $issue->format() . PHP_EOL);
+        }
+        fwrite(STDERR, sprintf("Contract lint failed with %d error(s).\n", count($exception->issues())));
+        exit(ExitCode::CONTRACT_ERROR);
+    } catch (Throwable $exception) {
+        fwrite(STDERR, 'Internal contract lint error: ' . $exception->getMessage() . PHP_EOL);
+        exit(ExitCode::INTERNAL_ERROR);
+    }
+}
+
+if ($command === 'api:generate' || $command === 'api:check') {
+    // Positional arguments are the command line too, so they are merged before the configuration
+    // file is consulted; ProjectConfig applies the project root defaults after it
+    if (isset($positional[0])) {
+        $options['contracts'] ??= $positional[0];
+    }
+    if (isset($positional[1])) {
+        $options['output'] ??= $positional[1];
+    }
+
+    try {
+        $options = ProjectConfig::resolve($options, (string) getcwd());
+    } catch (CommandFailure $failure) {
+        foreach ($failure->messages as $message) {
+            $err($message);
+        }
+        exit($failure->exitCode);
+    }
+
+    $runner = new GenerationRunner(Platforms::resolver());
+    $write = static function (string $line) use ($out): void {
+        $out($line);
+    };
+    $report = static function (string $line) use ($err): void {
+        $err($line);
+    };
+
+    exit($command === 'api:check'
+        ? $runner->check($options, $write, $report)
+        : $runner->run($options, $write, $report));
+}
+
+fwrite(STDOUT, <<<'HELP'
+plato-api contract tools
+
+Usage:
+  plato-api api:lint [contract-directory] [--platform=PATH|--adapter=NAME] [--config=PATH]
+  plato-api api:generate [contract-directory] [output-directory] [options]
+  plato-api api:check [contract-directory] [output-directory] [options]
+
+api:generate options:
+  --config=PATH                   Standalone options file (default: api-contract.php)
+  --contracts=PATH                Contract directory
+  --output=PATH                   Project output root
+  --platform=PATH                 PHP template-pack definition file
+  --adapter=NAME                  Platform adapter (default: plato)
+  --controller-namespace=NAME     Generated controller namespace
+  --logic-namespace=NAME          User owned Logic namespace
+  --controller-dir=PATH           Controller directory under the output root (default: app/control)
+  --logic-dir=PATH                User owned Logic directory (default: app/logic)
+  --templates=PATH                Directory of template overrides, searched before the built-ins
+  --exception=CLASS               Class refusing invalid input, implementing Runtime\Refusal
+  --openapi=PATH                  OpenAPI output path (default: docs/api/openapi.json)
+  --manifest=PATH                 Generation manifest path (default: api/manifest.json)
+  --base-path=PATH                Document base path prefix
+  --path-suffix=TEXT              Document path suffix
+  --title=TEXT                    OpenAPI document title
+  --api-version=TEXT              OpenAPI document version
+  --dry-run                       Verify and report without writing files
+  --force                         Overwrite generated files that were edited by hand
+
+api:check takes the same options except --dry-run and --force, and must be given the same values
+api:generate runs with, or every artifact looks out of date. Keeping them in the configuration
+file instead of on both command lines is what stops the two from drifting apart; that file is also
+the only place platform strategies are named.
+
+Exit codes: 0 success, 2 contract error, 3 generation refused, 4 stale artifacts, 70 internal error.
+HELP . PHP_EOL);
+exit($command === '' || in_array($command, ['help', '--help', '-h'], true) ? 0 : 1);

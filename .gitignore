@@ -1,0 +1,41 @@
+# Dependencies
+/vendor/
+/node_modules/
+/composer.lock
+
+# Test and analysis output
+/.phpunit.cache/
+/.phpunit.result.cache
+/.phpstan.cache/
+/coverage/
+
+# Local environment and tooling
+/.env
+/.env.*
+!/.env.example
+/.npmrc
+/auth.json
+/.idea/
+/.vscode/
+.DS_Store
+npm-debug.log*
+
+# Local AI assistant instructions and state
+AGENTS.md
+CLAUDE.md
+.agents/
+.claude/
+.codex/
+
+# Published documentation: keep the stable references and update them in place.
+/DEVELOPMENT_PLAN.md
+/docs/*
+!/docs/dsl.md
+!/docs/templates.md
+!/docs/configuration.md
+
+# Generated test fixture output. app/logic is tracked on purpose: generation creates a Logic file
+# once and never overwrites it, and the HTTP feature test needs the hand-written implementation.
+/tests/Fixtures/project/api/
+/tests/Fixtures/project/app/control/ctl_ping.php
+/tests/Fixtures/project/docs/

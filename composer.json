@@ -1,0 +1,59 @@
+{
+    "name": "lumnd/plato-api-contract",
+    "description": "Contract-first API code and OpenAPI generation with template-pack framework adapters",
+    "type": "library",
+    "license": "MIT",
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/lumnd/platophp.git"
+        }
+    ],
+    "require": {
+        "php": "^8.2",
+        "ext-json": "*"
+    },
+    "require-dev": {
+        "lumnd/platophp": "~0.1",
+        "pestphp/pest": "^3.7 || ^4.7",
+        "phpstan/phpstan": "^2.2"
+    },
+    "suggest": {
+        "lumnd/platophp": "Required by the console commands (api:lint, api:generate, api:check) when they are registered in a PlatoPHP project, and by the code generated for the plato adapter"
+    },
+    "autoload": {
+        "psr-4": {
+            "Lumnd\\PlatoApiContract\\": "src/"
+        },
+        "files": [
+            "src/Dsl/functions.php"
+        ]
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Fixture\\": "tests/Fixtures/project/app/",
+            "Tests\\": "tests/"
+        }
+    },
+    "bin": [
+        "bin/plato-api"
+    ],
+    "config": {
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        },
+        "platform": {
+            "php": "8.2"
+        },
+        "sort-packages": true
+    },
+    "scripts": {
+        "analyse": "phpstan analyse --memory-limit=1G",
+        "test": "pest --colors=always",
+        "verify": [
+            "@test",
+            "@analyse",
+            "npm run lint:openapi"
+        ]
+    }
+}

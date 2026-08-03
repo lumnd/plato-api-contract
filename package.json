@@ -1,0 +1,10 @@
+{
+    "name": "plato-api-contract-dev-tools",
+    "private": true,
+    "devDependencies": {
+        "@redocly/cli": "^2.0.0"
+    },
+    "scripts": {
+        "lint:openapi": "redocly lint tests/Fixtures/project/docs/openapi.json tests/Golden/plato/*/docs/api/*.json --config redocly.yaml"
+    }
+}

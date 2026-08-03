@@ -1,0 +1,74 @@
+{
+    "info": {
+        "title": "Golden API",
+        "version": "1.0.0"
+    },
+    "openapi": "3.1.0",
+    "paths": {
+        "/ping/index": {
+            "get": {
+                "deprecated": false,
+                "description": "",
+                "operationId": "ping.index",
+                "parameters": [
+                    {
+                        "description": "Message to echo back.",
+                        "in": "query",
+                        "name": "message",
+                        "required": true,
+                        "schema": {
+                            "description": "Message to echo back.",
+                            "maxLength": 100,
+                            "minLength": 1,
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "code": {
+                                            "example": 0,
+                                            "type": "integer"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "message": {
+                                                    "description": "The echoed message.",
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "required": [
+                                                "message"
+                                            ],
+                                            "type": "object"
+                                        },
+                                        "msg": {
+                                            "example": "successful",
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "code",
+                                        "data",
+                                        "msg"
+                                    ],
+                                    "type": "object"
+                                }
+                            }
+                        },
+                        "description": "Successful response"
+                    }
+                },
+                "security": [],
+                "summary": "Return a ping message",
+                "tags": [
+                    "ping"
+                ]
+            }
+        }
+    }
+}
