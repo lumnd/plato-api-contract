@@ -75,8 +75,7 @@ final class ProjectConfig
         string $root,
         string $defaultFile = self::FILE,
         bool $nestedDefault = false,
-    ): array
-    {
+    ): array {
         $requested = isset($cli['config']) && $cli['config'] !== true ? (string) $cli['config'] : '';
         unset($cli['config']);
 

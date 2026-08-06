@@ -7,7 +7,6 @@ use Lumnd\PlatoApiContract\Generation\GenerationContext;
 use Lumnd\PlatoApiContract\Generation\PhpTemplateRenderer;
 use Lumnd\PlatoApiContract\Generation\TemplateApi;
 use Lumnd\PlatoApiContract\Generation\TemplateLocator;
-use Lumnd\PlatoApiContract\Ir\ContractCollection;
 use Lumnd\PlatoApiContract\Platform\Plato\PlatoConfig;
 use Lumnd\PlatoApiContract\Platform\Plato\PlatoControllerGenerator;
 use Lumnd\PlatoApiContract\Platform\Plato\PlatoPlatformAdapter;
@@ -41,11 +40,13 @@ function template_artifacts(?string $override): array
         templateDirectory: $override,
     ));
 
-    $files = [];
-    foreach ($adapter->generate(
+    $artifacts = $adapter->generate(
         fixture_contracts('ping'),
         new GenerationContext('/virtual/project'),
-    ) as $artifact) {
+    );
+
+    $files = [];
+    foreach ($artifacts as $artifact) {
         $files[$artifact->path] = $artifact->contents;
     }
 

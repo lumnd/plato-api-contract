@@ -39,3 +39,6 @@ CLAUDE.md
 /tests/Fixtures/project/api/
 /tests/Fixtures/project/app/control/ctl_ping.php
 /tests/Fixtures/project/docs/
+
+# PHP_CodeSniffer cache
+/.phpcs.cache

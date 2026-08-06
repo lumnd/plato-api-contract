@@ -1,0 +1,68 @@
+<?xml version="1.0"?>
+<ruleset name="plato-api-contract">
+    <description>PSR-12 over hand-written project source. Generated and frozen output is excluded.</description>
+
+    <!-- bin/plato-api is not listed: PHP_CodeSniffer refuses any file without an extension, even
+         when it is named directly. The composer "style" script pipes it in over stdin instead. -->
+    <file>src</file>
+    <file>templates</file>
+    <file>tests</file>
+
+    <!-- Frozen generator output, not project source. The golden suite php -l checks it and the
+         determinism test pins it byte for byte, so a style fix here would be a false failure. -->
+    <exclude-pattern>tests/Golden/plato/*</exclude-pattern>
+    <!-- Written by api:generate into the HTTP feature fixture; gitignored, regenerated per run. -->
+    <exclude-pattern>tests/Fixtures/project/api/*</exclude-pattern>
+    <exclude-pattern>tests/Fixtures/project/app/api/*</exclude-pattern>
+    <exclude-pattern>tests/Fixtures/project/app/control/*</exclude-pattern>
+
+    <arg name="basepath" value="."/>
+    <arg name="extensions" value="php"/>
+    <arg name="parallel" value="8"/>
+    <arg name="cache" value=".phpcs.cache"/>
+    <arg value="p"/>
+
+    <!-- Warnings are reported but do not fail the build; only errors do. -->
+    <config name="ignore_warnings_on_exit" value="1"/>
+
+    <rule ref="PSR12"/>
+
+    <!-- PlatoPHP names host classes in snake_case, and the fixtures exist to be a realistic host
+         application and realistic inline DSL DTOs. Renaming them would test the wrong convention. -->
+    <rule ref="Squiz.Classes.ValidClassName.NotCamelCaps">
+        <exclude-pattern>tests/Fixtures/*</exclude-pattern>
+    </rule>
+
+    <!-- Test doubles live next to the test that uses them, and PlatoPHP host classes are global by
+         design. Neither is autoloaded by this package, so PSR-1 class placement does not apply. -->
+    <rule ref="PSR1.Classes.ClassDeclaration.MissingNamespace">
+        <exclude-pattern>tests/*</exclude-pattern>
+    </rule>
+    <rule ref="PSR1.Classes.ClassDeclaration.MultipleClasses">
+        <exclude-pattern>tests/*</exclude-pattern>
+    </rule>
+
+    <!-- Declaring a helper next to the code that runs it is the point of a Pest file, a template
+         renders by echoing, and a contract fixture returns an array. All three mix symbols with
+         side effects on purpose; only src/ is library code where the separation means something. -->
+    <rule ref="PSR1.Files.SideEffects.FoundWithSymbols">
+        <exclude-pattern>templates/*</exclude-pattern>
+        <exclude-pattern>tests/*</exclude-pattern>
+    </rule>
+
+    <!-- Contract fixtures are DSL data, not classes. Where they carry a docblock it documents the
+         returned contract — and in invalid-doc it is a stray block the compiler must ignore, so it
+         has to stay exactly where it is for the test to mean anything. -->
+    <rule ref="PSR12.Files.FileHeader">
+        <exclude-pattern>tests/Fixtures/contracts/*</exclude-pattern>
+    </rule>
+
+    <!-- 120 is the PSR-12 soft limit and the width this codebase already wraps to. Keep it a
+         warning: a long heredoc line inside a template is not worth failing the build over. -->
+    <rule ref="Generic.Files.LineLength">
+        <properties>
+            <property name="lineLimit" value="120"/>
+            <property name="absoluteLineLimit" value="0"/>
+        </properties>
+    </rule>
+</ruleset>

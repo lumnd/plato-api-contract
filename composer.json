@@ -16,7 +16,8 @@
     "require-dev": {
         "lumnd/platophp": "~0.1",
         "pestphp/pest": "^3.7 || ^4.7",
-        "phpstan/phpstan": "^2.2"
+        "phpstan/phpstan": "^2.2",
+        "squizlabs/php_codesniffer": "^3.11"
     },
     "suggest": {
         "lumnd/platophp": "Required by the console commands (api:lint, api:generate, api:check) when they are registered in a PlatoPHP project, and by the code generated for the plato adapter"
@@ -49,10 +50,16 @@
     },
     "scripts": {
         "analyse": "phpstan analyse --memory-limit=1G",
+        "style": [
+            "phpcs",
+            "phpcs --stdin-path=bin/plato-api - < bin/plato-api"
+        ],
+        "style:fix": "phpcbf",
         "test": "pest --colors=always",
         "verify": [
             "@test",
             "@analyse",
+            "@style",
             "npm run lint:openapi"
         ]
     }
