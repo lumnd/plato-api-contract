@@ -2,16 +2,31 @@
 
 [English](README.md) | [简体中文](README.zh-CN.md)
 
-Contract-first controller and OpenAPI 3.1 generation for PHP frameworks. The bundled platform is
-PlatoPHP; another framework can be connected with a trusted PHP template pack. Contracts may use
-lightweight `rules()` sets or application-owned readonly DTOs. The generator writes controllers,
-scaffolds Logic once, and records generated ownership in a manifest.
+Contract-first API generation for PHP. Define routes, validation, request/response shapes, and auth
+once, then generate framework controllers, Logic skeletons, and an OpenAPI 3.1 document from the
+same contract.
+
+Use it when a PHP API needs:
+
+- Controller code, validation rules, and OpenAPI documentation that do not drift apart
+- Lightweight array-shape contracts for fast endpoints, or readonly DTO classes for typed APIs
+- Generated controllers that are safe to overwrite, with application Logic files scaffolded once and
+  left under user ownership
+- `api:check` in CI to fail when generated output is missing, stale, edited, or obsolete
+- A bundled PlatoPHP adapter, or a custom framework adapter through a trusted PHP template pack
+
+The package fits teams that prefer contract-first API development but still want ordinary PHP
+application code rather than a separate schema service.
 
 ## Installation and requirements
 
 - PHP 8.2+
 - PlatoPHP when using the bundled `plato` platform
 - Node.js only for the development OpenAPI lint script
+
+```bash
+composer require lumnd/plato-api-contract
+```
 
 Install `lumnd/plato-api-contract` as a production dependency of the host application. Generated
 Plato controllers and Logic signatures use this package's `Runtime\ApiContext`, `Runtime\Input` and
